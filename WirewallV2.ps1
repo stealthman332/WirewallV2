@@ -61,7 +61,7 @@ $Presets = @{
     "ClientWorkstation" = @{
         Description = "Typical client: allow DNS outbound, Windows Update outbound, NTP, DNS resolver"
         Rules = @(
-            @{ Name="CCDC - Allow-DNS-Out"; Protocol="UDP"; RemotePort=5$Profilep; Direction="Outbound"; Profile="Any" },
+            @{ Name="CCDC - Allow-DNS-Out"; Protocol="UDP"; RemotePort=$Profilep; Direction="Outbound"; Profile="Any" },
             @{ Name="CCDC - Allow-DNS-TCP-Out"; Protocol="TCP"; RemotePort=53; Direction="Outbound"; Profile="Any" },
             @{ Name="CCDC - Allow-NTP-Out"; Protocol="UDP"; RemotePort=123; Direction="Outbound"; Profile="Any" }
             
