@@ -61,7 +61,7 @@ $Presets = @{
     "ClientWorkstation" = @{
         Description = "Typical client: allow DNS outbound, Windows Update outbound, NTP, DNS resolver"
         Rules = @(
-            @{ Name="CCDC - Allow-DNS-Out"; Protocol="UDP"; RemotePort=53; Direction="Outbound"; Profile="Any" },
+            @{ Name="CCDC - Allow-DNS-Out"; Protocol="UDP"; RemotePort=5$Profilep; Direction="Outbound"; Profile="Any" },
             @{ Name="CCDC - Allow-DNS-TCP-Out"; Protocol="TCP"; RemotePort=53; Direction="Outbound"; Profile="Any" },
             @{ Name="CCDC - Allow-NTP-Out"; Protocol="UDP"; RemotePort=123; Direction="Outbound"; Profile="Any" }
             
@@ -154,18 +154,18 @@ Function Create-AllowRule {
         [string]$Protocol = "TCP",
         [string]$LocalPort = $null,
         [string]$RemotePort = $null,
-        [string]$Profile = "Any",
+        [string]$Profilep = "Any",
         [string]$RemoteAddress = "Any",
         [string]$LocalAddress = "Any",
         [string]$Program = $null,
         [string]$Description = $null
     )
-    Write-Log "Creating rule: $Name ($Direction $Protocol LocalPort=$LocalPort RemotePort=$RemotePort Profile=$Profile)"
+    Write-Log "Creating rule: $Name ($Direction $Protocol LocalPort=$LocalPort RemotePort=$RemotePort Profile=$Profilep)"
     $params = @{
         DisplayName = $Name
         Direction   = $Direction
         Action      = "Allow"
-        Profile     = $Profile
+        Profile     = $Profilep
         Enabled     = "True"
         Protocol    = $Protocol
     }
@@ -190,10 +190,10 @@ Function Create-BlockRule {
         [string]$Protocol = "TCP",
         [string]$LocalPort = $null,
         [string]$RemotePort = $null,
-        [string]$Profile = "Any"
+        [string]$Profilep = "Any"
     )
     Write-Log "Creating block rule: $Name"
-    New-NetFirewallRule -DisplayName $Name -Direction $Direction -Action Block -Protocol $Protocol -LocalPort $LocalPort -RemotePort $RemotePort -Profile $Profile -Enabled True -ErrorAction SilentlyContinue
+    New-NetFirewallRule -DisplayName $Name -Direction $Direction -Action Block -Protocol $Protocol -LocalPort $LocalPort -RemotePort $RemotePort -Profile $Profilep -Enabled True -ErrorAction SilentlyContinue
 }
 
 # takes the values from the hashtable "presets" and applys them
@@ -218,9 +218,9 @@ Function Quick-Add-Wizard {
     $proto = Read-Host "Protocol (TCP/UDP/Any) [TCP]"; if (-not $proto){$proto="TCP"}
     $localPort = Read-Host "LocalPort (single or range e.g. 443 or 50000-50100) [leave blank if not applicable]"
     $remotePort = Read-Host "RemotePort (for outbound rules when necessary) [leave blank if not applicable]"
-    $profile = Read-Host "Profile (Domain,Private,Public,Any) [Any]"; if (-not $profile){$profile="Any"}
+    $Profilep = Read-Host "Profile (Domain,Private,Public,Any) [Any]"; if (-not $Profilep){$Profilep="Any"}
     $desc = Read-Host "Description [optional]"
-    Create-AllowRule -Name $name -Direction $dir -Protocol $proto -LocalPort $localPort -RemotePort $remotePort -Profile $profile -Description $desc
+    Create-AllowRule -Name $name -Direction $dir -Protocol $proto -LocalPort $localPort -RemotePort $remotePort -Profile $Profilep -Description $desc
 }
 
 # superspeed add rule if we need it on the fly
@@ -230,10 +230,10 @@ Function Quick-Add {
         [string]$Protocol = "TCP",
         [string]$Direction = "Inbound",
         [string]$LocalPort = $null,
-        [string]$Profile = "Any",
+        [string]$Profilep = "Any",
         [string]$Description = $null
     )
-    Create-AllowRule -Name $Name -Protocol $Protocol -Direction $Direction -LocalPort $LocalPort -Profile $Profile -Description $Description
+    Create-AllowRule -Name $Name -Protocol $Protocol -Direction $Direction -LocalPort $LocalPort -Profile $Profilep -Description $Description
 }
 
 # zerologon honeypot (plz john dont kill me)
@@ -302,7 +302,7 @@ Function Show-Backups {
 }
 
 # Menu options (note: subject to change)
-Function     {
+Function  Show-Menu   {
     Clear-Host
     Write-Host "=== Firewall Defender Menu ==="
     Write-Host "1) Backup current firewall"
