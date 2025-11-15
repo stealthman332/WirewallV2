@@ -210,17 +210,21 @@ Function Apply-Preset {
 
 # less fast superspeed add rule (But more complex)
 Function Quick-Add-Wizard {
-    Write-Host "Quick Add Rule Wizard (minimal prompts). Press Enter to accept defaults."
-    $name = Read-Host "Rule display name (example: Allow-MyApp-HTTPS)"
-    if (-not $name) { $name = "Allow-Custom-$([guid]::NewGuid().ToString().Substring(0,8))" }
-    $dir = Read-Host "Direction (Inbound/Outbound) [Inbound]"
-    if (-not $dir) { $dir = "Inbound" }
-    $proto = Read-Host "Protocol (TCP/UDP/Any) [TCP]"; if (-not $proto){$proto="TCP"}
-    $localPort = Read-Host "LocalPort (single or range e.g. 443 or 50000-50100) [leave blank if not applicable]"
-    $remotePort = Read-Host "RemotePort (for outbound rules when necessary) [leave blank if not applicable]"
-    $Profilep = Read-Host "Profile (Domain,Private,Public,Any) [Any]"; if (-not $Profilep){$Profilep="Any"}
-    $desc = Read-Host "Description [optional]"
-    Create-AllowRule -Name $name -Direction $dir -Protocol $proto -LocalPort $localPort -RemotePort $remotePort -Profile $Profilep -Description $desc
+    Write-Host "Create new profile wizard"
+    $RuleOptions = @(
+            @{ Name="CCDC - Allow-Kerberos-In";        Protocol="TCP"; LocalPort=88;  Direction="Inbound";  Profile="Domain" },
+            @{ Name="CCDC - Allow-Kerberos-In-UDP";    Protocol="UDP"; LocalPort=88;  Direction="Inbound";  Profile="Domain" },
+            @{ Name="CCDC - Allow-LDAP-In";            Protocol="TCP"; LocalPort=389; Direction="Inbound";  Profile="Domain" },
+            @{ Name="CCDC - Allow-LDAP-In-UDP";        Protocol="UDP"; LocalPort=389; Direction="Inbound";  Profile="Domain" },
+            @{ Name="CCDC - Allow-LDAPS-In";           Protocol="TCP"; LocalPort=636; Direction="Inbound";  Profile="Domain" },
+            @{ Name="CCDC - Allow-RPC-EndpointMapper"; Protocol="TCP"; LocalPort=135; Direction="Inbound";  Profile="Domain" },
+            @{ Name="CCDC - Allow-NTLM-Netlogon";      Protocol="TCP"; LocalPort=445; Direction="Inbound";  Profile="Domain" },
+            @{ Name="CCDC - Allow-DNS-In";             Protocol="UDP"; LocalPort=53;  Direction="Inbound";  Profile="Domain" }
+            # Add more if we fillin it chat
+        )
+    Write-Host $RuleOptions
+    
+    
 }
 
 # superspeed add rule if we need it on the fly
@@ -301,6 +305,72 @@ Function Show-Backups {
     return $dirs
 }
 
+Function Nuke-Firewall{
+    Write-Host "This option will completely erase all current rules."
+    $Answer = Read-Host "Are you sure you would like to continue? [Y/N]: "
+
+    if ($Answer -match '^[Yy]') {
+        write-host "Removing all FW rules..."
+        Get-NetFirewallRule | Remove-NetFirewallRule
+        Write-Log "[$Timestamp] User nuked all FW rules"
+    }else{
+        write-host "Aborted..."
+    }
+
+}
+
+
+function New-FWProfile {
+    param(
+        [Parameter(Mandatory)]
+        [string]$UserInput
+    )
+
+    $newname = Read-Host "Enter name for new config: "
+    $profileFile = Join-Path $LogPathRoot ($newname + ".ps1")
+
+    
+    $indices = $UserInput -split '[ ,]+' |
+        Where-Object { $_ -match '^\d+$' } |
+        ForEach-Object { [int]$_ }
+
+    if (-not $indices) {
+        Write-Host "No valid rule numbers entered. Aborting."
+        return
+    }
+
+    
+    $indices = $indices | ForEach-Object { $_ - 1 }
+
+    $lines = @()
+
+    foreach ($idx in $indices) {
+        
+        if ($idx -lt 0 -or $idx -ge $RuleOptions.Name.Count) {
+            Write-Host "Skipping invalid index $($idx + 1) (out of range)."
+            continue
+        }
+
+        $line = "Create-AllowRule -Name `"$($RuleOptions.Name[$idx])`" -Direction $($RuleOptions.Direction[$idx]) -Protocol $($RuleOptions.Protocol[$idx]) -LocalPort $($RuleOptions.LocalPort[$idx]) -Profile $($RuleOptions.Profile[$idx])"
+        Write-Host $line
+        $lines += $line
+    }
+
+    if ($lines.Count -eq 0) {
+        Write-Host "No valid rules selected. Profile not created."
+        return
+    }
+
+    
+    $lines | Set-Content -Path $profileFile -Encoding UTF8
+
+    Write-Host "New profile created at $profileFile"
+    Write-Output $profileFile
+}
+
+
+
+
 # Menu options (note: subject to change)
 Function  Show-Menu   {
     Clear-Host
@@ -308,12 +378,14 @@ Function  Show-Menu   {
     Write-Host "1) Backup current firewall"
     Write-Host "2) Set default policy: Block Outbound, Block Inbound (recommended)"
     Write-Host "3) Quick Config presets (DomainController / DNS / WebServer / FTP / ClientWorkstation)"
-    Write-Host "4) A-la-carte Quick Add Wizard (interactive)"
+    Write-Host "4) Create Preset"
     Write-Host "5) Quick-Add (non-interactive) example usage"
     Write-Host "6) Start Zerologon Honeypot (logs connections)"
     Write-Host "7) List backups / Restore from backup"
     Write-Host "8) Show current default profile actions"
-    Write-Host "9) Exit"
+    Write-Host "9) Nuke Firewall"
+    Write-Host "10) Exit Wirewall"
+    
     $choice = Read-Host "Choose an option [1-9]"
     switch ($choice) {
         "1" {
@@ -390,11 +462,52 @@ Function  Show-Menu   {
             Pause
             Show-Menu
         }
-        "9" { Write-Host "Goodbye."; return }
+        "10" { 
+            Write-Host "Goodbye."; return 
+        }
+        "9"{
+            Nuke-Firewall
+            Show-Menu
+        }"11" {
+
+            
+            for (($i = 0); $i -lt $RuleOptions.Count; $i++) {
+                Write-Host ($i + 1) ")" ($RuleOptions.Name[$i]) - ($RuleOptions.Protocol[$i]) - ($RuleOptions.LocalPort[$i]) - ($RuleOptions.Direction[$i]) - ($RuleOptions.Profile[$i])
+            }
+
+           
+            $tempProfile = Read-Host "Type the numbers of the rules you want to add to new profile (e.g. 1 3 5): "
+
+  
+            $profileFile = New-FWProfile -UserInput $tempProfile
+
+            
+            if (-not $profileFile) {
+                Write-Host "No profile created. Returning to menu..."
+                Show-Menu
+                break
+            }
+
+        
+            $UserInput = Read-Host "Would you like to apply this new profile now? (y/n)"
+            if ($UserInput -match '^[Yy]') {
+                # Execute the script
+                & $profileFile
+                Write-Host "Profile applied from $profileFile"
+            }
+            else {
+                Write-Host "Profile not applied. Returning to menu..."
+            }
+
+            Show-Menu
+}
         default {
             Write-Host "Invalid choice."
             Show-Menu
         }
+
+
+
     }
 }
 
