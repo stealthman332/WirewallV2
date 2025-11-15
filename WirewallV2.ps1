@@ -6,41 +6,42 @@
 
 $RuleOptions = @(
     # --- Active Directory Core ---
-    @{ Name="CCDC-KRB-88-TCP";        Protocol="TCP"; LocalPort=88;              Direction="Inbound"; Profile="Domain" },
-    @{ Name="CCDC-KRB-88-UDP";        Protocol="UDP"; LocalPort=88;              Direction="Inbound"; Profile="Domain" },
+    @{ Name="CCDC-KRB-88-TCP";        Protocol="TCP"; LocalPort=88;              Direction="Inbound"; Profile="Domain,Public,Private" },
+    @{ Name="CCDC-KRB-88-UDP";        Protocol="UDP"; LocalPort=88;              Direction="Inbound"; Profile="Domain,Public,Private" },
 
-    @{ Name="CCDC-LDAP-389-TCP";      Protocol="TCP"; LocalPort=389;             Direction="Inbound"; Profile="Domain" },
-    @{ Name="CCDC-LDAP-389-UDP";      Protocol="UDP"; LocalPort=389;             Direction="Inbound"; Profile="Domain" },
-
-    @{ Name="CCDC-LDAPS-636-TCP";     Protocol="TCP"; LocalPort=636;             Direction="Inbound"; Profile="Domain" },
-
-    @{ Name="CCDC-RPC-135-TCP";       Protocol="TCP"; LocalPort=135;             Direction="Inbound"; Profile="Domain" },
-    @{ Name="CCDC-SMB-445-TCP";       Protocol="TCP"; LocalPort=445;             Direction="Inbound"; Profile="Domain" },
-
-    @{ Name="CCDC-DNS-53-UDP";        Protocol="UDP"; LocalPort=53;              Direction="Inbound"; Profile="Domain" },
-    @{ Name="CCDC-SSH-22-TCP";        Protocol="TCP"; LocalPort=22;              Direction="Inbound"; Profile="Domain" }
+    @{ Name="CCDC-LDAP-389-TCP";      Protocol="TCP"; LocalPort=389;             Direction="Inbound"; Profile="Domain,Public,Private" },
+    @{ Name="CCDC-LDAP-389-UDP";      Protocol="UDP"; LocalPort=389;             Direction="Inbound"; Profile="Domain,Public,Private" },
+    @{ Name="CCDC-LDAPS-636-TCP";     Protocol="TCP"; LocalPort=636;             Direction="Inbound"; Profile="Domain,Public,Private" },
+    
+    @{ Name="CCDC-SMB-445-TCP";       Protocol="TCP"; LocalPort=445;             Direction="Inbound"; Profile="Domain,Public,Private" },
+    @{ Name="CCDC-DNS-53-UDP";        Protocol="UDP"; LocalPort=53;              Direction="Inbound"; Profile="Domain,Public,Private" },
+    @{ Name="CCDC-SSH-22-TCP";        Protocol="TCP"; LocalPort=22;              Direction="Inbound"; Profile="Domain,Public,Private" },
 
 
-    @{ Name="CCDC-ICMPv4";            Protocol="ICMPv4"; LocalPort="Any";        Direction="Inbound"; Profile="Domain" },
+    @{ Name="CCDC-ICMPv4";            Protocol="ICMPv4"; LocalPort="Any";        Direction="Inbound"; Profile="Domain,Public,Private" },
     # --- Database Services ---
-    @{ Name="CCDC-MSSQL-1433-TCP";    Protocol="TCP"; LocalPort=1433;            Direction="Inbound"; Profile="Domain" },
-    @{ Name="CCDC-SQLBR-1434-UDP";    Protocol="UDP"; LocalPort=1434;            Direction="Inbound"; Profile="Domain" },
+    @{ Name="CCDC-MSSQL-1433-TCP";    Protocol="TCP"; LocalPort=1433;            Direction="Inbound"; Profile="Domain,Public,Private" },
+    @{ Name="CCDC-SQLBR-1434-UDP";    Protocol="UDP"; LocalPort=1434;            Direction="Inbound"; Profile="Domain,Public,Private" },
 
     # --- Web Services ---
-    @{ Name="CCDC-HTTP-80-TCP";       Protocol="TCP"; LocalPort=80;              Direction="Inbound"; Profile="Domain" },
-    @{ Name="CCDC-HTTPS-443-TCP";     Protocol="TCP"; LocalPort=443;             Direction="Inbound"; Profile="Domain" },
-    @{ Name="CCDC-WEB-8080-TCP";      Protocol="TCP"; LocalPort=8080;            Direction="Inbound"; Profile="Domain" },
+    @{ Name="CCDC-HTTP-80-TCP";       Protocol="TCP"; LocalPort=80;              Direction="Inbound"; Profile="Domain,Public,Private" },
+    @{ Name="CCDC-HTTPS-443-TCP";     Protocol="TCP"; LocalPort=443;             Direction="Inbound"; Profile="Domain,Public,Private" },
+    @{ Name="CCDC-WEB-8080-TCP";      Protocol="TCP"; LocalPort=8080;            Direction="Inbound"; Profile="Domain,Public,Private" },
 
     # --- Remote Management ---
-    @{ Name="CCDC-RDP-3389-TCP";      Protocol="TCP"; LocalPort=3389;            Direction="Inbound"; Profile="Domain" },
-
+    @{ Name="CCDC-RDP-3389-TCP";      Protocol="TCP"; LocalPort=3389;            Direction="Inbound"; Profile="Domain,Public,Private" },
+    @{ Name="CCDC-RPC-135-TCP";       Protocol="TCP"; LocalPort=135;             Direction="Inbound"; Profile="Domain,Public,Private" },
+    @{ Name="CCDC-WinRM-5985-TCP";    Protocol="TCP"; LocalPort=5985;            Direction="Inbound"; Profile="Domain,Public,Private" },
+    @{ Name="CCDC-WinRMs-5986-TCP";   Protocol="TCP"; LocalPort=5986;            Direction="Inbound"; Profile="Domain,Public,Private" },
     # --- DHCP ---
-    @{ Name="CCDC-DHCP-67-UDP";       Protocol="UDP"; LocalPort=67;              Direction="Inbound"; Profile="Domain" },
-    @{ Name="CCDC-DHCP-68-UDP";       Protocol="UDP"; LocalPort=68;              Direction="Inbound"; Profile="Domain" },
+    @{ Name="CCDC-DHCP-67-UDP";       Protocol="UDP"; LocalPort=67;              Direction="Inbound"; Profile="Domain,Public,Private" },
+    @{ Name="CCDC-DHCP-68-UDP";       Protocol="UDP"; LocalPort=68;              Direction="Inbound"; Profile="Domain,Public,Private" },
 
     # --- FTP ---
-    @{ Name="CCDC-FTP-21-TCP";        Protocol="TCP"; LocalPort=21;              Direction="Inbound"; Profile="Domain" },
-    @{ Name="CCDC-FTPD-20-TCP";       Protocol="TCP"; LocalPort=20;              Direction="Inbound"; Profile="Domain" }
+    @{ Name="CCDC-FTP-21-TCP";        Protocol="TCP"; LocalPort=21;              Direction="Inbound"; Profile="Domain,Public,Private" },
+    @{ Name="CCDC-FTPD-20-TCP";       Protocol="TCP"; LocalPort=20;              Direction="Inbound"; Profile="Domain,Public,Private" },
+    @{ Name="CCDC-FTP-21-TCP";        Protocol="TCP"; LocalPort=21;              Direction="Outbound"; Profile="Domain,Public,Private" },
+    @{ Name="CCDC-FTPD-20-TCP";       Protocol="TCP"; LocalPort=20;              Direction="Outbound"; Profile="Domain,Public,Private" }
 
 
    
@@ -64,14 +65,14 @@ $Presets = @{
     "DomainController" = @{
         Description = "AD DS typical ports"
         Rules = @(
-            @{ Name="CCDC - Allow-Kerberos-In";        Protocol="TCP"; LocalPort=88;  Direction="Inbound";  Profile="Domain" },
-            @{ Name="CCDC - Allow-Kerberos-In-UDP";    Protocol="UDP"; LocalPort=88;  Direction="Inbound";  Profile="Domain" },
-            @{ Name="CCDC - Allow-LDAP-In";            Protocol="TCP"; LocalPort=389; Direction="Inbound";  Profile="Domain" },
-            @{ Name="CCDC - Allow-LDAP-In-UDP";        Protocol="UDP"; LocalPort=389; Direction="Inbound";  Profile="Domain" },
-            @{ Name="CCDC - Allow-LDAPS-In";           Protocol="TCP"; LocalPort=636; Direction="Inbound";  Profile="Domain" },
-            @{ Name="CCDC - Allow-RPC-EndpointMapper"; Protocol="TCP"; LocalPort=135; Direction="Inbound";  Profile="Domain" },
-            @{ Name="CCDC - Allow-NTLM-Netlogon";      Protocol="TCP"; LocalPort=445; Direction="Inbound";  Profile="Domain" },
-            @{ Name="CCDC - Allow-DNS-In";             Protocol="UDP"; LocalPort=53;  Direction="Inbound";  Profile="Domain" }
+            @{ Name="CCDC - Allow-Kerberos-In";        Protocol="TCP"; LocalPort=88;  Direction="Inbound";  Profile="Domain,Public,Private" },
+            @{ Name="CCDC - Allow-Kerberos-In-UDP";    Protocol="UDP"; LocalPort=88;  Direction="Inbound";  Profile="Domain,Public,Private" },
+            @{ Name="CCDC - Allow-LDAP-In";            Protocol="TCP"; LocalPort=389; Direction="Inbound";  Profile="Domain,Public,Private" },
+            @{ Name="CCDC - Allow-LDAP-In-UDP";        Protocol="UDP"; LocalPort=389; Direction="Inbound";  Profile="Domain,Public,Private" },
+            @{ Name="CCDC - Allow-LDAPS-In";           Protocol="TCP"; LocalPort=636; Direction="Inbound";  Profile="Domain,Public,Private" },
+            @{ Name="CCDC - Allow-RPC-EndpointMapper"; Protocol="TCP"; LocalPort=135; Direction="Inbound";  Profile="Domain,Public,Private" },
+            @{ Name="CCDC - Allow-NTLM-Netlogon";      Protocol="TCP"; LocalPort=445; Direction="Inbound";  Profile="Domain,Public,Private" },
+            @{ Name="CCDC - Allow-DNS-In";             Protocol="UDP"; LocalPort=53;  Direction="Inbound";  Profile="Domain,Public,Private" }
             # Add more if we fillin it chat
         )
     }
@@ -416,8 +417,8 @@ Function  Show-Menu   {
     Write-Host "=== Firewall Defender Menu ==="
     Write-Host "1) Backup current firewall"
     Write-Host "2) Set default policy: Block Outbound, Block Inbound (recommended)"
-    Write-Host "3) Quick Config presets (DomainController / DNS / WebServer / FTP / ClientWorkstation)"
-    Write-Host "4) WIP"
+    Write-Host "3) Box preset Config (DomainController / DNS / WebServer / FTP / ClientWorkstation)"
+    Write-Host "4) Quick add rule"
     Write-Host "5) WIP"
     Write-Host "6) (Technically WIP) Start Zerologon Honeypot (logs connections)"
     Write-Host "7) List backups / Restore from backup"
@@ -508,6 +509,19 @@ Function  Show-Menu   {
         }"11" {
 
     for(($i = 0); $i -lt $RuleOptions.Count; $i++){
+        if ($i -eq 0) {
+            Write-Host "Domain Controller Core"
+        }if ($i -eq 10) {
+            Write-Host "`nDatabase Services"
+        }if ($i -eq 12) {    
+            Write-Host "`nWeb Services"
+        }if ($i -eq 15) {
+            Write-Host "`nRemote Management"
+        }if ($i -eq 16) {
+            Write-Host "`nDHCP"
+        }if ($i -eq 18) {
+            Write-Host "`nFTP"
+        }
         Write-Host ($i+1) ")" ($RuleOptions.Name[$i]) - ($RuleOptions.Protocol[$i]) - ($RuleOptions.LocalPort[$i]) - ($RuleOptions.Direction[$i]) - ($RuleOptions.Profile[$i])
 
     }
