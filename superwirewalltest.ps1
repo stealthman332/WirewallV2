@@ -1,4 +1,4 @@
-<#
+﻿<#
     default deny out
     run as admin
     ezpz
@@ -359,7 +359,7 @@ Function Nuke-Firewall{
 }
 
 
-Function New-FWProfile {
+function New-FWProfile {
     param(
         [Parameter(Mandatory)]
         [string]$UserInput
@@ -407,6 +407,91 @@ Function New-FWProfile {
     Write-Output $profileFile
 }
 
+Function Setup-Winlogbeat {
+    Write-Host "=== Winlogbeat Setup (Local Log Server) ==="
+
+   
+    $candidates = @(
+        "C:\Program Files\Winlogbeat",
+        "C:\Program Files\Elastic\Winlogbeat"
+    )
+
+    $winlogbeatPath = $candidates | Where-Object { Test-Path $_ } | Select-Object -First 1
+
+    if (-not $winlogbeatPath) {
+        Write-Host "Could not auto-detect Winlogbeat install folder."
+        $winlogbeatPath = Read-Host "Enter full path to Winlogbeat folder (where winlogbeat.exe lives)"
+    }
+
+    if (-not (Test-Path $winlogbeatPath)) {
+        Write-Host "Path '$winlogbeatPath' does not exist. Aborting Winlogbeat setup."
+        Write-Log "Winlogbeat setup aborted: path not found ($winlogbeatPath)."
+        return
+    }
+
+    $winlogbeatExe = Join-Path $winlogbeatPath "winlogbeat.exe"
+    if (-not (Test-Path $winlogbeatExe)) {
+        Write-Host "Could not find winlogbeat.exe in $winlogbeatPath. Aborting."
+        Write-Log "Winlogbeat setup aborted: winlogbeat.exe not found."
+        return
+    }
+
+    
+    $logIP = Read-Host "Enter IP of local log server (e.g. 10.32.68.50)"
+    if (-not $logIP) {
+        Write-Host "No IP entered. Aborting Winlogbeat setup."
+        Write-Log "Winlogbeat setup aborted: no IP provided."
+        return
+    }
+
+    
+    $logPort = 5044
+
+    $configPath = Join-Path $winlogbeatPath "winlogbeat.yml"
+    Write-Log "Writing Winlogbeat config to $configPath"
+
+    $configContent = @"
+winlogbeat.event_logs:
+  - name: Security
+    ignore_older: 72h
+  - name: System
+  - name: Application
+  - name: Microsoft-Windows-PowerShell/Operational
+  - name: Microsoft-Windows-Sysmon/Operational
+
+output.logstash:
+  hosts: [""${logIP}:${logPort}""]
+"@
+
+    $configContent | Set-Content -Path $configPath -Encoding UTF8
+    Write-Log "Winlogbeat config written to $configPath (sending to ${logIP}:${logPort})"
+
+    
+    $ruleName = "CCDC-WINLOGBEAT-$logPort-TCP-OUT"
+    Write-Log "Creating outbound allow rule $ruleName for Winlogbeat -> ${logIP}:${logPort}"
+    Create-AllowRule -Name $ruleName `
+        -Direction "Outbound" `
+        -Protocol "TCP" `
+        -RemotePort $logPort `
+        -Profilep "Any" `
+        -RemoteAddress $logIP `
+        -Description "Allow Winlogbeat to send logs to local log server ${logIP}:${logPort}"
+
+    
+    try {
+        Write-Log "Installing Winlogbeat service."
+        Push-Location $winlogbeatPath
+        & $winlogbeatExe install | Out-Null
+        Pop-Location
+
+        Start-Service winlogbeat -ErrorAction Stop
+        Write-Host "Winlogbeat service installed and started."
+        Write-Log "Winlogbeat service installed and started successfully."
+    } catch {
+        Write-Host "Failed to install or start Winlogbeat service. You may need to run '$winlogbeatExe install' manually."
+        Write-Log "Winlogbeat service install/start failed: $_"
+    }
+}
 
 
 
@@ -421,7 +506,7 @@ Function  Show-Menu   {
     Write-Host "5) WIP"
     Write-Host "6) (Technically WIP) Start Zerologon Honeypot (logs connections)"
     Write-Host "7) List backups / Restore from backup"
-    Write-Host "8) WIP"
+    Write-Host "8) (WIP) Start winlogonbeat (send to local kibana)"
     Write-Host "9) Nuke Firewall"
     Write-Host "10) Exit Wirewall"
     Write-Host "11) Create/Apply firewall Profile"  
@@ -496,7 +581,10 @@ Function  Show-Menu   {
             Show-Menu
         }
         "8" {
-            
+            Write-Host "Setting up Winlogbeat to send logs to a local log server."
+            Backup-Firewall | Out-Null
+            Setup-Winlogbeat
+            Pause
             Show-Menu
         }
         "10" { 
