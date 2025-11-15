@@ -33,18 +33,18 @@ $RuleOptions = @(
     @{ Name="CCDC-RPC-135-TCP";       Protocol="TCP"; LocalPort=135;             Direction="Inbound"; Profile="Domain,Public,Private" },
     @{ Name="CCDC-WinRM-5985-TCP";    Protocol="TCP"; LocalPort=5985;            Direction="Inbound"; Profile="Domain,Public,Private" },
     @{ Name="CCDC-WinRMs-5986-TCP";   Protocol="TCP"; LocalPort=5986;            Direction="Inbound"; Profile="Domain,Public,Private" },
-    # --- DHCP ---
-    @{ Name="CCDC-DHCP-67-UDP";       Protocol="UDP"; LocalPort=67;              Direction="Inbound"; Profile="Domain,Public,Private" },
-    @{ Name="CCDC-DHCP-68-UDP";       Protocol="UDP"; LocalPort=68;              Direction="Inbound"; Profile="Domain,Public,Private" },
-
     # --- FTP ---
     @{ Name="CCDC-FTP-21-TCP";        Protocol="TCP"; LocalPort=21;              Direction="Inbound"; Profile="Domain,Public,Private" },
     @{ Name="CCDC-FTPD-20-TCP";       Protocol="TCP"; LocalPort=20;              Direction="Inbound"; Profile="Domain,Public,Private" },
     @{ Name="CCDC-FTP-21-TCP";        Protocol="TCP"; LocalPort=21;              Direction="Outbound"; Profile="Domain,Public,Private" },
-    @{ Name="CCDC-FTPD-20-TCP";       Protocol="TCP"; LocalPort=20;              Direction="Outbound"; Profile="Domain,Public,Private" }
+    @{ Name="CCDC-FTPD-20-TCP";       Protocol="TCP"; LocalPort=20;              Direction="Outbound"; Profile="Domain,Public,Private" },
 
-
-   
+    # --- Mail Services ---
+    @{ Name="CCDC-SMTP-25-TCP";       Protocol="TCP"; LocalPort=25;              Direction="Inbound"; Profile="Domain,Public,Private" },
+    @{ Name="CCDC-IMAP-143-TCP";      Protocol="TCP"; LocalPort=143;             Direction="Inbound"; Profile="Domain,Public,Private" },
+    @{ Name="CCDC-IMAPS-993-TCP";     Protocol="TCP"; LocalPort=993;             Direction="Inbound"; Profile="Domain,Public,Private" },
+    @{ Name="CCDC-POP3-110-TCP";      Protocol="TCP"; LocalPort=110;             Direction="Inbound"; Profile="Domain,Public,Private" },
+    @{ Name="CCDC-POP3S-995-TCP";     Protocol="TCP"; LocalPort=995;             Direction="Inbound"; Profile="Domain,Public,Private" }   
 )
 
 $LogPathRoot = "$env:ProgramData\FirewallDefender"
@@ -391,7 +391,7 @@ function New-FWProfile {
             continue
         }
 
-        $line = "Create-AllowRule -Name `"$($RuleOptions.Name[$idx])`" -Direction $($RuleOptions.Direction[$idx]) -Protocol $($RuleOptions.Protocol[$idx]) -LocalPort $($RuleOptions.LocalPort[$idx]) -Profile $($RuleOptions.Profile[$idx])"
+        $line = "New-NetFirewallRule -DisplayName `"$($RuleOptions.Name[$idx])`" -Direction $($RuleOptions.Direction[$idx]) -Protocol $($RuleOptions.Protocol[$idx]) -LocalPort $($RuleOptions.LocalPort[$idx]) -Profile $($RuleOptions.Profile[$idx])"
         Write-Host $line
         $lines += $line
     }
@@ -511,17 +511,22 @@ Function  Show-Menu   {
     for(($i = 0); $i -lt $RuleOptions.Count; $i++){
         if ($i -eq 0) {
             Write-Host "Domain Controller Core"
-        }if ($i -eq 10) {
+        }if ($i -eq 9) {
             Write-Host "`nDatabase Services"
-        }if ($i -eq 12) {    
+        }if ($i -eq 11) {    
             Write-Host "`nWeb Services"
-        }if ($i -eq 15) {
+        }if ($i -eq 14) {
             Write-Host "`nRemote Management"
-        }if ($i -eq 16) {
-            Write-Host "`nDHCP"
         }if ($i -eq 18) {
             Write-Host "`nFTP"
+        }if ($i -eq 22) {
+            Write-Host "`nMail Services"
         }
+
+
+
+
+
         Write-Host ($i+1) ")" ($RuleOptions.Name[$i]) - ($RuleOptions.Protocol[$i]) - ($RuleOptions.LocalPort[$i]) - ($RuleOptions.Direction[$i]) - ($RuleOptions.Profile[$i])
 
     }
