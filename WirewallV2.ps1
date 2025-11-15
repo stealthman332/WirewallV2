@@ -4,8 +4,47 @@
     ezpz
 #>
 
+$RuleOptions = @(
+    # --- Active Directory Core ---
+    @{ Name="CCDC-KRB-88-TCP";        Protocol="TCP"; LocalPort=88;              Direction="Inbound"; Profile="Domain" },
+    @{ Name="CCDC-KRB-88-UDP";        Protocol="UDP"; LocalPort=88;              Direction="Inbound"; Profile="Domain" },
+
+    @{ Name="CCDC-LDAP-389-TCP";      Protocol="TCP"; LocalPort=389;             Direction="Inbound"; Profile="Domain" },
+    @{ Name="CCDC-LDAP-389-UDP";      Protocol="UDP"; LocalPort=389;             Direction="Inbound"; Profile="Domain" },
+
+    @{ Name="CCDC-LDAPS-636-TCP";     Protocol="TCP"; LocalPort=636;             Direction="Inbound"; Profile="Domain" },
+
+    @{ Name="CCDC-RPC-135-TCP";       Protocol="TCP"; LocalPort=135;             Direction="Inbound"; Profile="Domain" },
+    @{ Name="CCDC-SMB-445-TCP";       Protocol="TCP"; LocalPort=445;             Direction="Inbound"; Profile="Domain" },
+
+    @{ Name="CCDC-DNS-53-UDP";        Protocol="UDP"; LocalPort=53;              Direction="Inbound"; Profile="Domain" },
+    @{ Name="CCDC-SSH-22-TCP";        Protocol="TCP"; LocalPort=22;              Direction="Inbound"; Profile="Domain" }
 
 
+    @{ Name="CCDC-ICMPv4";            Protocol="ICMPv4"; LocalPort="Any";        Direction="Inbound"; Profile="Domain" },
+    # --- Database Services ---
+    @{ Name="CCDC-MSSQL-1433-TCP";    Protocol="TCP"; LocalPort=1433;            Direction="Inbound"; Profile="Domain" },
+    @{ Name="CCDC-SQLBR-1434-UDP";    Protocol="UDP"; LocalPort=1434;            Direction="Inbound"; Profile="Domain" },
+
+    # --- Web Services ---
+    @{ Name="CCDC-HTTP-80-TCP";       Protocol="TCP"; LocalPort=80;              Direction="Inbound"; Profile="Domain" },
+    @{ Name="CCDC-HTTPS-443-TCP";     Protocol="TCP"; LocalPort=443;             Direction="Inbound"; Profile="Domain" },
+    @{ Name="CCDC-WEB-8080-TCP";      Protocol="TCP"; LocalPort=8080;            Direction="Inbound"; Profile="Domain" },
+
+    # --- Remote Management ---
+    @{ Name="CCDC-RDP-3389-TCP";      Protocol="TCP"; LocalPort=3389;            Direction="Inbound"; Profile="Domain" },
+
+    # --- DHCP ---
+    @{ Name="CCDC-DHCP-67-UDP";       Protocol="UDP"; LocalPort=67;              Direction="Inbound"; Profile="Domain" },
+    @{ Name="CCDC-DHCP-68-UDP";       Protocol="UDP"; LocalPort=68;              Direction="Inbound"; Profile="Domain" },
+
+    # --- FTP ---
+    @{ Name="CCDC-FTP-21-TCP";        Protocol="TCP"; LocalPort=21;              Direction="Inbound"; Profile="Domain" },
+    @{ Name="CCDC-FTPD-20-TCP";       Protocol="TCP"; LocalPort=20;              Direction="Inbound"; Profile="Domain" }
+
+
+   
+)
 
 $LogPathRoot = "$env:ProgramData\FirewallDefender"
 
@@ -378,14 +417,15 @@ Function  Show-Menu   {
     Write-Host "1) Backup current firewall"
     Write-Host "2) Set default policy: Block Outbound, Block Inbound (recommended)"
     Write-Host "3) Quick Config presets (DomainController / DNS / WebServer / FTP / ClientWorkstation)"
-    Write-Host "4) Create Preset"
-    Write-Host "5) Quick-Add (non-interactive) example usage"
-    Write-Host "6) Start Zerologon Honeypot (logs connections)"
+    Write-Host "4) WIP"
+    Write-Host "5) WIP"
+    Write-Host "6) (Technically WIP) Start Zerologon Honeypot (logs connections)"
     Write-Host "7) List backups / Restore from backup"
-    Write-Host "8) Show current default profile actions"
+    Write-Host "8) WIP"
     Write-Host "9) Nuke Firewall"
     Write-Host "10) Exit Wirewall"
-    
+    Write-Host "11) Create/Apply firewall Profile"  
+      
     $choice = Read-Host "Choose an option [1-9]"
     switch ($choice) {
         "1" {
@@ -419,9 +459,7 @@ Function  Show-Menu   {
             Show-Menu
         }
         "4" {
-            Backup-Firewall | Out-Null
-            Quick-Add-Wizard
-            Pause
+            
             Show-Menu
         }
         "5" {
@@ -458,8 +496,7 @@ Function  Show-Menu   {
             Show-Menu
         }
         "8" {
-            Get-NetFirewallProfile | Format-Table Name, Enabled, DefaultInboundAction, DefaultOutboundAction -AutoSize
-            Pause
+            
             Show-Menu
         }
         "10" { 
@@ -470,36 +507,33 @@ Function  Show-Menu   {
             Show-Menu
         }"11" {
 
-            
-            for (($i = 0); $i -lt $RuleOptions.Count; $i++) {
-                Write-Host ($i + 1) ")" ($RuleOptions.Name[$i]) - ($RuleOptions.Protocol[$i]) - ($RuleOptions.LocalPort[$i]) - ($RuleOptions.Direction[$i]) - ($RuleOptions.Profile[$i])
-            }
+    for(($i = 0); $i -lt $RuleOptions.Count; $i++){
+        Write-Host ($i+1) ")" ($RuleOptions.Name[$i]) - ($RuleOptions.Protocol[$i]) - ($RuleOptions.LocalPort[$i]) - ($RuleOptions.Direction[$i]) - ($RuleOptions.Profile[$i])
 
-           
-            $tempProfile = Read-Host "Type the numbers of the rules you want to add to new profile (e.g. 1 3 5): "
+    }
 
-  
-            $profileFile = New-FWProfile -UserInput $tempProfile
+    $tempProfile = Read-Host "Type the numbers of the rules you want to add to new profile (e.g. 1 3 5) plz add spaces my monke brain: "
 
-            
-            if (-not $profileFile) {
-                Write-Host "No profile created. Returning to menu..."
-                Show-Menu
-                break
-            }
+    
+    $profileFile = New-FWProfile -UserInput $tempProfile
 
+    
+    if (-not $profileFile) {
+        Write-Host "No profile created. Returning to menu..."
+        Show-Menu
+        break
+    }
+
+    $UserInput = Read-Host "Would you like to apply this new profile now? (y/n)"
+    if ($UserInput -match '^[Yy]') {
         
-            $UserInput = Read-Host "Would you like to apply this new profile now? (y/n)"
-            if ($UserInput -match '^[Yy]') {
-                # Execute the script
-                & $profileFile
-                Write-Host "Profile applied from $profileFile"
-            }
-            else {
-                Write-Host "Profile not applied. Returning to menu..."
-            }
+        & $profileFile
+        Write-Host "Profile applied from $profileFile"
+    } else {
+        Write-Host "Exiting..."
+    }
 
-            Show-Menu
+    Show-Menu
 }
         default {
             Write-Host "Invalid choice."
